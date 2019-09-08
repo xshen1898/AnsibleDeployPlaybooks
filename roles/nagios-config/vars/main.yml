@@ -1,0 +1,5 @@
+---
+email_addressee: "12345678@qq.com"
+smtp_server: "smtp.126.com"
+smtp_sender: "someone@126.com"
+smtp_password: "12345678"

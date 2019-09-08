@@ -1,0 +1,52 @@
+---
+  - name: Install MySQL 5.7
+    yum:
+      name:
+        - MySQL-python
+        - mysql-community-server
+        - mysql-community-devel
+        - mysql-community-libs 
+      state: present
+  
+  - name: start mysql
+    service:
+      name: mysqld
+      state: started
+      enabled: yes
+
+  - name: get root temporary password
+    shell: grep 'temporary password' /var/log/mysqld.log | awk '{print $NF}'
+    register: mysql_root_temporary_password
+
+  - name: copy .my_tmp.cnf file with temporary root password credentials
+    template:
+      src: my_tmp.cnf.j2
+      dest: ~/.my.cnf
+      mode: 0600
+
+  - name: reset root password
+    shell: mysql --connect-expired-password -e "alter user 'root'@'localhost' identified by '{{ mysql_root_password }}'"
+
+  - name: copy .my.cnf file with root password credentials
+    template:
+      src: my.cnf.j2
+      dest: ~/.my.cnf
+      mode: 0600
+
+  - name: create application database
+    mysql_db:
+      db: "{{ nagios_db }}"
+      state: present
+
+  - name: create application database user
+    mysql_user:
+      name: "{{ nagios_user }}"
+      password: "{{ nagios_password }}"
+      priv: "{{ nagios_db }}.*:SELECT"
+      host: localhost
+      state: present
+
+  - name: add mysql service in firewall
+    shell: firewall-cmd --permanent --zone=public --add-service=mysql
+    notify:
+      - reload-firewall

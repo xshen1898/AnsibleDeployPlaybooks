@@ -1,0 +1,80 @@
+---
+  - name: install mailx
+    yum:
+      name: mailx
+      state: present
+    when: inventory_hostname in groups.nagiosservers
+
+  - name: copy mail.rc to /etc/mail.rc
+    template:
+      src: mail.rc.j2
+      dest: /etc/mail.rc
+    when: inventory_hostname in groups.nagiosservers
+
+  - name: change sendmail to mailx and add check_nrpe in commands.cfg
+    copy:
+      src: commands.cfg
+      dest: /usr/local/nagios/etc/objects/commands.cfg
+      owner: nagios
+      group: nagios
+      mode: '0644'
+    when: inventory_hostname in groups.nagiosservers
+
+  - name: copy contacts.cfg
+    template:
+      src: contacts.cfg.j2
+      dest: /usr/local/nagios/etc/objects/contacts.cfg
+      owner: nagios
+      group: nagios
+      mode: '0644'
+    when: inventory_hostname in groups.nagiosservers
+
+  - name: copy nagios.cfg
+    copy:
+      src: nagios.cfg
+      dest: /usr/local/nagios/etc/nagios.cfg
+      owner: nagios
+      group: nagios
+      mode: '0644'
+    when: inventory_hostname in groups.nagiosservers
+
+  - name: create directory /usr/local/nagios/etc/servers
+    file:
+      path: /usr/local/nagios/etc/servers
+      state: directory
+      owner: nagios
+      group: nagios
+    when: inventory_hostname in groups.nagiosservers
+
+  - name: copy hostgroups.cfg
+    copy:
+      src: hostgroups.cfg
+      dest: /usr/local/nagios/etc/servers/hostgroups.cfg
+      owner: nagios
+      group: nagios
+      mode: '0644'
+    when: inventory_hostname in groups.nagiosservers
+    
+  - name: copy services.cfg
+    copy:
+      src: services.cfg
+      dest: /usr/local/nagios/etc/servers/services.cfg
+      owner: nagios
+      group: nagios
+      mode: '0644'
+    when: inventory_hostname in groups.nagiosservers
+
+  - name: copy hosts.cfg
+    template:
+      src: hosts.cfg.j2
+      dest: /usr/local/nagios/etc/servers/hosts.cfg
+      owner: nagios
+      group: nagios
+      mode: '0644'
+    when: inventory_hostname in groups.nagiosservers
+
+  - name: restart nagios
+    service:
+      name: nagios
+      state: restarted
+    when: inventory_hostname in groups.nagiosservers

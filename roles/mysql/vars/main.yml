@@ -1,0 +1,5 @@
+---
+mysql_root_password: "Admin@2019"
+nagios_db: "nagios"
+nagios_user: "nagios"
+nagios_password: "Nagios@2019"

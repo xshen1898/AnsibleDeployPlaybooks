@@ -1,0 +1,61 @@
+---
+  - name: update repo file
+    copy:
+      src: "{{ item }}"
+      dest: "{{ '/etc/yum.repos.d/' + item }}"
+    with_items:
+      - CentOS-Base.repo
+      - epel.repo
+      - nginx.repo
+      - webtatic.repo
+      - mysql-community.repo
+
+  - name: update gpg key file
+    copy:
+      src: "{{ item }}"
+      dest: "{{ '/etc/pki/rpm-gpg/' + item }}"
+    with_items:
+      - RPM-GPG-KEY-EPEL-7
+      - RPM-GPG-KEY-nginx
+      - RPM-GPG-KEY-webtatic-el7
+      - RPM-GPG-KEY-mysql
+
+  - name: rebuild yum cache
+    shell: yum clean all && yum makecache
+
+  - name: install ntp
+    yum:
+      name: ntp
+      state: present
+
+  - name: configure ntp
+    template:
+      src: ntp.conf.j2
+      dest: /etc/ntp.conf
+
+  - name: start ntp service
+    service:
+      name: ntpd
+      state: started
+      enabled: yes
+
+  - name: update time zone
+    file:
+      path: /etc/localtime
+      state: link
+      src: /usr/share/zoneinfo/Asia/Shanghai
+      force: yes
+
+  - name: install network tools
+    yum: 
+      name:
+        - net-tools
+        - wget
+      state: present
+
+  - name: install python packages for SE Linux
+    yum: 
+      name:
+        - libselinux-python
+        - libsemanage-python
+      state: present   

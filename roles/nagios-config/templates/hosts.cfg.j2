@@ -1,0 +1,43 @@
+###############################################################################
+#
+# HOST DEFINITION
+#
+###############################################################################
+
+# Define hosts for the linux machines
+
+{% for host in groups['webservers'] %}
+define host {
+
+    use                     linux-server
+    host_name               {{ hostvars[host]['ansible_nodename'] }}
+    alias                   {{ hostvars[host]['ansible_nodename'] }}
+    address                 {{ hostvars[host]['ansible_default_ipv4']['address'] }}
+    hostgroups              linux-servers,web-servers
+    notification_period     24x7
+}
+{% endfor %}
+
+{% for host in groups['lbservers'] %}
+define host {
+
+    use                     linux-server
+    host_name               {{ hostvars[host]['ansible_nodename'] }}
+    alias                   {{ hostvars[host]['ansible_nodename'] }}
+    address                 {{ hostvars[host]['ansible_default_ipv4']['address'] }}
+    hostgroups              linux-servers,web-servers
+    notification_period     24x7
+}
+{% endfor %}
+
+{% for host in groups['dbservers'] %}
+define host {
+
+    use                     linux-server
+    host_name               {{ hostvars[host]['ansible_nodename'] }}
+    alias                   {{ hostvars[host]['ansible_nodename'] }}
+    address                 {{ hostvars[host]['ansible_default_ipv4']['address'] }}
+    hostgroups              linux-servers,db-servers
+    notification_period     24x7
+}
+{% endfor %}

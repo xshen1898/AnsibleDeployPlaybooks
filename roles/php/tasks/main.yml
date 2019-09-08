@@ -1,0 +1,42 @@
+---
+  - name: install php70w
+    yum:
+      name:
+        - php70w
+        - php70w-cli
+        - php70w-common
+        - php70w-mysql
+        - php70w-gd
+        - php70w-mbstring
+        - php70w-mcrypt
+        - php70w-pdo
+      state: present
+
+  - name: install php70w-fpm
+    yum:
+      name:
+        - php70w-fpm
+        - php70w-opcache
+        - php70w-common
+      state: present
+
+  - name: start php-fpm
+    service:
+      name: php-fpm
+      state: started
+      enabled: yes
+
+  - name: copy php_info.php
+    copy:
+      src: php_info.php
+      dest: "{{ html_root + '/php_info.php' }}"
+
+  - name: copy nginx default.conf to run php
+    template:
+      src: default.conf.j2
+      dest: "{{ nginx_config_root + '/default.conf' }}"
+    notify:
+      - restart-nginx
+
+  
+

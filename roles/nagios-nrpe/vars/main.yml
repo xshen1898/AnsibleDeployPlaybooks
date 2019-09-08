@@ -1,0 +1,4 @@
+---
+nagios_server_ip: "{{ hostvars[groups.nagiosservers[0]].ansible_default_ipv4.address }}"
+mysql_user: "nagios"
+mysql_password: "Nagios@2019"

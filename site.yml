@@ -1,0 +1,32 @@
+---
+- hosts: all
+  roles: 
+    - common
+
+- hosts: dbservers
+  roles: 
+    - mysql
+
+- hosts: webservers
+  gather_facts: yes
+  roles: 
+    - nginx
+    - php
+
+- hosts:
+    - webservers
+    - lbservers
+  gather_facts: yes
+  roles: 
+    - haproxy
+
+- hosts: nagiosservers
+  roles:
+    - nagios-core
+
+- hosts: all
+  gather_facts: yes
+  roles:
+    - nagios-plugins
+    - nagios-nrpe
+    - nagios-config

@@ -1,0 +1,77 @@
+---
+  - name: install the pre-requisite packages
+    yum:
+      name:
+        - gcc
+        - glibc
+        - glibc-common
+        - openssl
+        - openssl-devel
+        - perl
+        - wget
+      state: present
+
+  - name: copy and unarchive nrpe-nrpe-3.2.1 to /tmp
+    unarchive:
+      src: nrpe-nrpe-3.2.1.tar.gz
+      dest: /tmp/
+
+  - name: Compile
+    shell: cd /tmp/nrpe-nrpe-3.2.1/ && ./configure --enable-command-args && make all
+
+  - name: Create User And Group
+    shell: cd /tmp/nrpe-nrpe-3.2.1/ && make install-groups-users
+
+  - name: Install Binaries
+    shell: cd /tmp/nrpe-nrpe-3.2.1/ && make install
+
+  - name: Install Configuration Files
+    shell: cd /tmp/nrpe-nrpe-3.2.1/ && make install-config
+
+  - name: Install Daemon
+    shell: cd /tmp/nrpe-nrpe-3.2.1/ && make install-init
+
+  - name: Configure Firewall
+    shell: firewall-cmd --zone=public --add-port=5666/tcp --permanent
+
+  - name: Reload Firewall
+    shell: firewall-cmd --reload
+
+  - name: Update allowed_hosts in Configuration File
+    lineinfile:
+      dest: /usr/local/nagios/etc/nrpe.cfg
+      regexp: ^allowed_hosts=127\.0\.0\.1
+      line: "{{ 'allowed_hosts=127.0.0.1,' + nagios_server_ip }}"
+
+  - name: Update dont_blame_nrpe in Configuration File
+    lineinfile:
+      dest: /usr/local/nagios/etc/nrpe.cfg
+      regexp: ^dont_blame_nrpe=.*
+      line: dont_blame_nrpe=1
+
+  - name: Update check_hda1 to check disk root in Configuration File
+    lineinfile:
+      dest: /usr/local/nagios/etc/nrpe.cfg
+      regexp: ^command\[check_hda1\]=.*
+      line: command[check_disk]=/usr/local/nagios/libexec/check_disk -w 20% -c 10% -p /
+
+  - name: Update check_swap in Configuration File
+    lineinfile:
+      dest: /usr/local/nagios/etc/nrpe.cfg
+      insertafter: ^command\[check_total_procs\]=.*
+      line: command[check_swap]=/usr/local/nagios/libexec/check_swap -w 20% -c 10%
+      create: yes
+
+  - name: Update check_mysql in Configuration File
+    lineinfile:
+      dest: /usr/local/nagios/etc/nrpe.cfg
+      insertafter: ^command\[check_swap\]=.*
+      line: command[check_mysql]=/usr/local/nagios/libexec/check_mysql -H 127.0.0.1 -u {{ mysql_user }} -p {{ mysql_password }}
+      create: yes
+    when: inventory_hostname in groups.dbservers
+
+  - name: Start Service / Daemon
+    service:
+      name: nrpe
+      state: started
+      enabled: yes 

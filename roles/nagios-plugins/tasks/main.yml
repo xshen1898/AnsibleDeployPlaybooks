@@ -1,0 +1,29 @@
+---
+  - name: install the pre-requisite packages
+    yum:
+      name:
+        - gcc
+        - glibc
+        - glibc-common
+        - make
+        - gettext
+        - automake
+        - autoconf
+        - wget
+        - openssl-devel
+        - net-snmp
+        - net-snmp-utils
+        - epel-release
+        - perl-Net-SNMP
+      state: present
+
+  - name: copy and unarchive nagios-plugins-release-2.2.1.tar.gz to /tmp
+    unarchive:
+      src: nagios-plugins-release-2.2.1.tar.gz
+      dest: /tmp/
+
+  - name: Compile
+    shell: cd /tmp/nagios-plugins-release-2.2.1/ && ./tools/setup && ./configure
+
+  - name: Install
+    shell: cd /tmp/nagios-plugins-release-2.2.1/ && make && make install

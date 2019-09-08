@@ -1,0 +1,29 @@
+---
+  - name: install nginx
+    yum: 
+      name: nginx
+      state: present
+
+  - name: start nginx
+    service: 
+      name: nginx
+      state: started
+      enabled: yes
+
+  - name: copy index.html.j2
+    template: 
+      src: index.html.j2
+      dest: "{{ html_root + '/index.html' }}"
+    notify:
+      - restart-nginx
+
+  - name: add http service in firewall
+    shell: firewall-cmd --permanent --zone=public --add-service=http
+    notify:
+      - reload-firewall
+  
+  - name: set httpd_can_network_connect flag on and keep it persistent across reboots
+    seboolean:
+      name: httpd_can_network_connect
+      state: yes
+      persistent: yes

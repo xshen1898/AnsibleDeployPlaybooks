@@ -1,0 +1,77 @@
+---
+  - name: set SELinux to disabled in /etc/selinux/config
+    lineinfile:
+      dest: /etc/selinux/config
+      regexp: ^SELINUX=
+      line: SELINUX=disabled
+
+  - name: disable SELinux
+    selinux:
+      state: disabled
+
+  - name: install the pre-requisite packages
+    yum:
+      name:
+        - gcc
+        - glibc
+        - glibc-common
+        - wget
+        - unzip
+        - httpd
+        - php
+        - gd
+        - gd-devel
+        - perl
+        - postfix
+      state: present
+
+  - name: download and unarchive nagios-4.4.3.tar.gz to /tmp
+    unarchive:
+      src: https://github.com/NagiosEnterprises/nrpe/archive/nrpe-3.2.1.tar.gz
+      dest: /tmp/
+      remote_src: yes
+
+  - name: Compile
+    shell: cd /tmp/nagioscore-nagios-4.4.3/ && ./configure && make all
+
+  - name: Create User And Group
+    shell: cd /tmp/nagioscore-nagios-4.4.3/ && make install-groups-users
+
+  - name: added apache user to the nagios group as well
+    shell: usermod -a -G nagios apache
+
+  - name: Install Binaries
+    shell: cd /tmp/nagioscore-nagios-4.4.3/ && make install
+
+  - name: Install Service / Daemon
+    shell: cd /tmp/nagioscore-nagios-4.4.3/ && make install-daemoninit
+
+  - name: Install Command Mode
+    shell: cd /tmp/nagioscore-nagios-4.4.3/ && make install-commandmode
+
+  - name: Install Configuration Files
+    shell: cd /tmp/nagioscore-nagios-4.4.3/ && make install-config
+
+  - name: Install Apache Config Files
+    shell: cd /tmp/nagioscore-nagios-4.4.3/ && make install-webconf
+
+  - name: Configure Firewall
+    shell: firewall-cmd --permanent --zone=public --add-service=http
+  
+  - name: Reload Firewall
+    shell: firewall-cmd --reload
+
+  - name: Create nagiosadmin User Account
+    shell: htpasswd -cb /usr/local/nagios/etc/htpasswd.users nagiosadmin nagiosadmin
+
+  - name: Start Apache Web Server
+    service: 
+      name: httpd
+      state: started
+      enabled: yes
+    
+  - name: Start Service / Daemon
+    service:
+      name: nagios
+      state: started
+      enabled: yes

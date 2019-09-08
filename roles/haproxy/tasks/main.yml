@@ -1,0 +1,27 @@
+---
+  - name: install haproxy
+    yum:
+      name: haproxy
+      state: present
+    when: inventory_hostname in groups.lbservers
+
+  - name: start haproxy
+    service:
+      name: haproxy
+      state: started
+      enabled: yes
+    when: inventory_hostname in groups.lbservers
+
+  - name: copy haproxy.cfg
+    template:
+      src: haproxy-http.cfg.j2
+      dest: /etc/haproxy/haproxy.cfg
+    notify:
+      - restart-haproxy
+    when: inventory_hostname in groups.lbservers
+
+  - name: add http service in firewall
+    shell: firewall-cmd --permanent --zone=public --add-service=http
+    notify:
+      - reload-firewall
+    when: inventory_hostname in groups.lbservers
